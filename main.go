@@ -37,14 +37,14 @@ func main() {
 
 	q.Listen()
 
-	client, err := ethclient.Dial("ws://127.0.0.1:8545")
+	client, err := ethclient.Dial(os.Getenv("ETH_RPC"))
 	if err != nil {
 		log.Fatalf("Failed to connect to the Ethereum client: %v", err)
 	}
 	defer client.Close()
 
 	// Specify the contract address
-	contractAddress := common.HexToAddress("0x5FbDB2315678afecb367f032d93F642f64180aa3")
+	contractAddress := common.HexToAddress(os.Getenv("CONTRACT_ADDRESS"))
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{contractAddress},
 	}
