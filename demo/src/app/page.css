@@ -11,11 +11,35 @@
     padding-bottom: 20px;
 }
 
+button {
+    border-radius: 0px;
+    border: none;
+    padding: 8px 16px;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+button:hover {
+    border-style: solid;
+    border-width: 1px;
+}
+
 .connectors > button {
     width: 80%;
     margin-left: auto;
     margin-right: auto;
     margin-bottom: 10px;
+
+    background-color: #f8f8f8;
+}
+
+#uploadButton {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+#ipfs {
+    margin-top: 8px;
 }
 
 .discon {

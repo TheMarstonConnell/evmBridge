@@ -180,14 +180,15 @@ function App() {
               Jackal EVM Demo
           </h1>
         <div id={"account"}>
-          <h2>Account</h2>
+
           <div>
               {account.status === 'connected' && (
                   <div>
-                  <span>{account.addresses?.[0]}</span>
-                  <button className={"discon"} type="button" onClick={() => disconnect()}>
-                      Disconnect
-                  </button>
+                      <h2>Account</h2>
+                      <span>{account.addresses?.[0]}</span>
+                      <button className={"discon"} type="button" onClick={() => disconnect()}>
+                          Disconnect
+                      </button>
                   </div>
               )}
           </div>
@@ -215,11 +216,11 @@ function App() {
               <form>
                   <input type="file" onChange={handleFileChange}/>
               </form>
-              <button onClick={uploadFile}>Upload</button>
+              <button id={"uploadButton"} onClick={uploadFile} disabled={account.status != 'connected' || !file}>Upload</button>
               {hash && <div>Transaction Hash: {hash}</div>}
               {isPending && <div>TX Pending...</div>}
               {cid.length > 0 &&
-                  <div>IPFS CID: <a target={"_blank"} href={"https://ipfs.io/ipfs/" + cid}>{cid}</a></div>}
+                  <div id={"ipfs"}>IPFS CID: <a target={"_blank"} href={"https://ipfs.io/ipfs/" + cid}>{cid}</a></div>}
               {hash && cid.length == 0 && <div>File uploading...</div>}
           </div>
       </>
