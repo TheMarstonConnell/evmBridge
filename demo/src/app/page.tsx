@@ -1,17 +1,18 @@
 'use client'
 
-import {useAccount, useConnect, useDisconnect, useWriteContract} from 'wagmi'
+import {useAccount, useConnect, useDisconnect, useWriteContract, BaseError} from 'wagmi'
 import {useState} from "react";
 import {IMerkletreeSource, Merkletree} from "@jackallabs/dogwood-tree";
 
 import './page.css'
 
 function App() {
-  const account = useAccount()
-  const { connectors, connect, status, error } = useConnect()
-  const { disconnect } = useDisconnect()
+    const account = useAccount()
+    const {connectors, connect, status, connectError} = useConnect()
+    const {disconnect} = useDisconnect()
     const {
         data: hash,
+        error,
         isPending,
         writeContract
     } = useWriteContract()
@@ -44,7 +45,7 @@ function App() {
                 }
             ],
             "outputs": [],
-            "stateMutability": "nonpayable"
+            "stateMutability": "payable"
         },
         {
             "type": "event",
@@ -73,10 +74,10 @@ function App() {
         }
     ]
 
-    const uploadFile = async () => {
+    async function doUpload (callback: Function)  {
 
         const seed = await file.arrayBuffer()
-        const source: IMerkletreeSource = { seed: seed, chunkSize: 10240, preserve: false }
+        const source: IMerkletreeSource = {seed: seed, chunkSize: 10240, preserve: false}
         const tree = await Merkletree.grow(source)
         const root = tree.getRootAsHex()
 
@@ -107,6 +108,7 @@ function App() {
                 socket.close()
             }, 60000)
 
+
         });
 
         socket.addEventListener("message", async (event) => {
@@ -114,6 +116,7 @@ function App() {
             console.log(data)
             console.log(data.result)
             if (Object.keys(data.result).length == 0) {
+                callback(root)
                 return
             }
 
@@ -132,8 +135,6 @@ function App() {
             formData.append('sender', senderS);
             formData.append('merkle', root);
             formData.append('start', Number(startS));
-
-
 
             const request = new Request(url, {
                 method: "POST",
@@ -163,68 +164,82 @@ function App() {
             socket.close()
         });
 
-        writeContract({
-            address: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
-            abi,
-            functionName: 'postFile',
-            args: [root, BigInt(file.size)],
-        })
-
-
+        console.log("finished")
 
 
     }
-  return (
-      <>
-          <h1>
-              Jackal EVM Demo
-          </h1>
-        <div id={"account"}>
 
-          <div>
-              {account.status === 'connected' && (
-                  <div>
-                      <h2>Account</h2>
-                      <span>{account.addresses?.[0]}</span>
-                      <button className={"discon"} type="button" onClick={() => disconnect()}>
-                          Disconnect
-                      </button>
-                  </div>
-              )}
-          </div>
+    function uploadFile() {
+        doUpload((root) => {
+            console.log(root)
+            writeContract({
+                address: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
+                abi,
+                functionName: 'postFile',
+                args: [root, BigInt(file.size)],
+                value: BigInt(5000000 * file.size),
+            });
+        })
+
+    }
+
+    return (
+        <>
+            <h1>
+                Jackal EVM Demo
+            </h1>
+            <div id={"account"}>
+
+                <div>
+                    {account.status === 'connected' && (
+                        <div>
+                            <h2>Account</h2>
+                            <span>{account.addresses?.[0]}</span>
+                            <button className={"discon"} type="button" onClick={() => disconnect()}>
+                                Disconnect
+                            </button>
+                        </div>
+                    )}
+                </div>
 
 
-        </div>
+            </div>
 
-          {account.status != 'connected' &&(
-        <div className={"connectors"}>
-          <h2>Connect</h2>
-          {connectors.map((connector) => (
-              <button
-                  key={connector.uid}
-                  onClick={() => connect({connector})}
-                  type="button"
-              >
-                {connector.name}
-              </button>
-          ))}
-          <div>{error?.message}</div>
-        </div>)}
+            {account.status != 'connected' && (
+                <div className={"connectors"}>
+                    <h2>Connect</h2>
+                    {connectors.map((connector) => (
+                        <button
+                            key={connector.uid}
+                            onClick={() => connect({connector})}
+                            type="button"
+                        >
+                            {connector.name}
+                        </button>
+                    ))}
+                    <div>{connectError?.message}</div>
+                </div>)}
 
-          <div>
-              <h2>Upload</h2>
-              <form>
-                  <input type="file" onChange={handleFileChange}/>
-              </form>
-              <button id={"uploadButton"} onClick={uploadFile} disabled={account.status != 'connected' || !file}>Upload</button>
-              {hash && <div>Transaction Hash: {hash}</div>}
-              {isPending && <div>TX Pending...</div>}
-              {cid.length > 0 &&
-                  <div id={"ipfs"}>IPFS CID: <a target={"_blank"} href={"https://ipfs.io/ipfs/" + cid}>{cid}</a></div>}
-              {hash && cid.length == 0 && <div>File uploading...</div>}
-          </div>
-      </>
-  )
+            <div>
+                <h2>Upload</h2>
+                <form>
+                    <input type="file" onChange={handleFileChange}/>
+                </form>
+                <button id={"uploadButton"} onClick={uploadFile}
+                        disabled={account.status != 'connected' || !file}>Upload
+                </button>
+                {hash && <div>Transaction Hash: {hash}</div>}
+                {isPending && <div>TX Pending...</div>}
+                {cid.length > 0 &&
+                    <div id={"ipfs"}>IPFS CID: <a target={"_blank"} href={"https://ipfs.io/ipfs/" + cid}>{cid}</a>
+                    </div>}
+                {hash && cid.length == 0 && <div>File uploading...</div>}
+                {error && (
+                    <div>Error: {(error as BaseError).shortMessage || error.message}</div>
+                )}
+            </div>
+        </>
+    )
 }
 
 export default App

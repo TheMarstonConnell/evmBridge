@@ -32,7 +32,7 @@ var ABI = `[
         }
       ],
       "outputs": [],
-      "stateMutability": "nonpayable"
+      "stateMutability": "payable"
     },
     {
       "type": "event",
