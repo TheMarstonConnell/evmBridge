@@ -177,7 +177,8 @@ function App() {
                 abi,
                 functionName: 'postFile',
                 args: [root, BigInt(file.size)],
-                value: BigInt(5000000 * file.size),
+                value: BigInt(5000000 * Math.max( file.size,  1024 * 1024)),
+                // value: BigInt(5000000 * file.size),
             });
         })
 

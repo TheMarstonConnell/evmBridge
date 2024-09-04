@@ -5,7 +5,13 @@ contract JackalBridge {
 
     function postFile(string memory merkle, uint64 filesize) public payable {
         require(msg.sender != address(0), "Invalid sender address");
-        require(msg.value == 5000000 * filesize, "Incorrect payment amount");
+
+        uint64 fs = filesize;
+        if (fs  <= 1024 * 1024) {
+            fs = 1024 * 1024;
+        }
+
+        require(msg.value == 5000000 * fs, "Incorrect payment amount");
 
         emit PostedFile(msg.sender, merkle, filesize);
     }
