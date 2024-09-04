@@ -4,6 +4,8 @@ import {useAccount, useConnect, useDisconnect, useWriteContract} from 'wagmi'
 import {useState} from "react";
 import {IMerkletreeSource, Merkletree} from "@jackallabs/dogwood-tree";
 
+import './page.css'
+
 function App() {
   const account = useAccount()
   const { connectors, connect, status, error } = useConnect()
@@ -174,25 +176,27 @@ function App() {
     }
   return (
       <>
-        <div>
+          <h1>
+              Jackal EVM Demo
+          </h1>
+        <div id={"account"}>
           <h2>Account</h2>
-
           <div>
-            status: {account.status}
-            <br/>
-            addresses: {JSON.stringify(account.addresses)}
-            <br/>
-            chainId: {account.chainId}
+              {account.status === 'connected' && (
+                  <div>
+                  <span>{account.addresses?.[0]}</span>
+                  <button className={"discon"} type="button" onClick={() => disconnect()}>
+                      Disconnect
+                  </button>
+                  </div>
+              )}
           </div>
 
-          {account.status === 'connected' && (
-              <button type="button" onClick={() => disconnect()}>
-                Disconnect
-              </button>
-          )}
+
         </div>
 
-        <div>
+          {account.status != 'connected' &&(
+        <div className={"connectors"}>
           <h2>Connect</h2>
           {connectors.map((connector) => (
               <button
@@ -203,9 +207,8 @@ function App() {
                 {connector.name}
               </button>
           ))}
-          <div>{status}</div>
           <div>{error?.message}</div>
-        </div>
+        </div>)}
 
           <div>
               <h2>Upload</h2>
@@ -214,8 +217,10 @@ function App() {
               </form>
               <button onClick={uploadFile}>Upload</button>
               {hash && <div>Transaction Hash: {hash}</div>}
-              {cid.length > 0 && <div>IPFS CID: {cid}</div>}
-
+              {isPending && <div>TX Pending...</div>}
+              {cid.length > 0 &&
+                  <div>IPFS CID: <a target={"_blank"} href={"https://ipfs.io/ipfs/" + cid}>{cid}</a></div>}
+              {hash && cid.length == 0 && <div>File uploading...</div>}
           </div>
       </>
   )
