@@ -169,17 +169,57 @@ function App() {
 
     }
 
+    const getEthPrice = async (): Promise<number> => {
+        try {
+            const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+            const data = await response.json();
+            return data.ethereum.usd;
+        } catch (error) {
+            console.error('Error fetching ETH price:', error);
+            throw error;
+        }
+    };
+
+    function getStoragePrice(price: number, filesize: number): number {
+
+        const storagePrice = 15;     // Price per TB in USD with 8 decimal places
+        const multiplier = 2;
+        const months = 200 * 12;     // Duration in months (200 years)
+
+        let fs = filesize;
+        if (fs <= 1024 * 1024) {
+            fs = 1024 * 1024;        // Minimum size is 1 MB
+        }
+
+        // Base Storage Multiplier (BSM): storage price calculation
+        const BSM = storagePrice * multiplier * months * fs;
+
+        // Calculate price in equivalent "wei" (for parallel logic, use integer math)
+        // 1e18 converts to smallest ETH units
+        const priceInWei = (BSM * 1e18) / (price * 1099511627776);
+
+        // If the result is zero (due to rounding or too small), set a minimum value
+        if (priceInWei === 0) {
+            return 5000;  // Return a minimum value (e.g., 5000 units of currency)
+        }
+
+        return priceInWei;
+    }
+
     function uploadFile() {
         doUpload((root) => {
             console.log(root)
-            writeContract({
-                address: '0x20738B8eaB736f24c7881bA48263ee60Eb2a0A2a',
-                abi,
-                functionName: 'postFile',
-                args: [root, BigInt(file.size)],
-                value: BigInt(5000000 * Math.max( file.size,  1024 * 1024)),
-                // value: BigInt(5000000 * file.size),
+            getEthPrice().then(price => {
+                const p = getStoragePrice(price, file.size);
+                writeContract({
+                    address: '0x3a5ab5d5df8A8AF40BbcE53DF5999E92b9017483',
+                    abi,
+                    functionName: 'postFile',
+                    args: [root, BigInt(file.size)],
+                    value: BigInt(Math.floor(p * 1.01)),
+                });
             });
+
         })
 
     }

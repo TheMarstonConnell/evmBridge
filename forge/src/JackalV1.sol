@@ -1,16 +1,20 @@
-// SPDX-License-Identifier: BUSL
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {AggregatorV3Interface} from "@chainlink/interfaces/feeds/AggregatorV3Interface.sol";
 import {Jackal} from "./Jackal.sol";
 
 contract JackalBridge is Ownable, Jackal {
 
+    AggregatorV3Interface internal priceFeed;
+
     address[] public relays;
 
-    constructor(address[] memory _relays) Ownable(msg.sender){
-        require (_relays.length > 0, "must provide relays");
+    constructor(address[] memory _relays, address _priceFeed) Ownable(msg.sender){
+        require(_relays.length > 0, "must provide relays");
 
+        priceFeed = AggregatorV3Interface(_priceFeed);
         relays = _relays;
     }
 
@@ -36,6 +40,9 @@ contract JackalBridge is Ownable, Jackal {
 
     // Function to remove a relay, only callable by the owner
     function removeRelay(address _relay) public onlyOwner {
+
+        require(relays.length > 1); // require there to be at least one relay in the list after removal
+
         for (uint i = 0; i < relays.length; i++) {
             if (relays[i] == _relay) {
                 relays[i] = relays[relays.length - 1];
@@ -43,27 +50,10 @@ contract JackalBridge is Ownable, Jackal {
                 break;
             }
         }
+
     }
 
-    // Function to split the balance: 50% to owner, 50% to relays
-    function distributeETH() public onlyOwnerOrRelay {
-        uint balance = address(this).balance;
-        require(balance > 0, "No ETH to distribute");
 
-        // Calculate 50% for the owner
-        uint ownerShare = balance / 2;
-        payable(owner()).transfer(ownerShare);
-
-        // If there are relays, split the remaining 50% among them
-        if (relays.length > 0) {
-            uint relayShare = balance - ownerShare; // Remaining 50%
-            uint perRelay = relayShare / relays.length;
-
-            for (uint i = 0; i < relays.length; i++) {
-                payable(relays[i]).transfer(perRelay);
-            }
-        }
-    }
 
     function distributeBalance() public onlyOwnerOrRelay {
         uint256 balance = address(this).balance;
@@ -72,17 +62,19 @@ contract JackalBridge is Ownable, Jackal {
         uint256 ownerShare = balance / 2;
         payable(owner()).transfer(ownerShare);
 
-        // If there are relays, split the remaining 50% among them
-        if (relays.length > 0) {
-            uint256 relayShare = balance - ownerShare; // Remaining 50%
-            uint256 perRelay = relayShare / relays.length;
+        uint256 relayShare = balance - ownerShare; // Remaining 50%
+        uint256 perRelay = relayShare / relays.length;
 
-            for (uint i = 0; i < relays.length; i++) {
-                payable(relays[i]).transfer(perRelay);
-            }
+        for (uint i = 0; i < relays.length; i++) {
+            payable(relays[i]).transfer(perRelay);
         }
+
     }
 
+    function getPrice() public override view returns (int) {
+        (,int price,,,) = priceFeed.latestRoundData();
+        return price;
+    }
 
 
 }
