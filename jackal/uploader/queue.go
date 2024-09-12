@@ -42,7 +42,7 @@ func (q *Queue) Listen() {
 	go func() {
 		for !q.stopped {
 			time.Sleep(time.Millisecond * 1000)
-			q.popAndPost()
+			q.popAndPost(10)
 		}
 	}()
 
@@ -54,20 +54,30 @@ func (q *Queue) Listen() {
 	}()
 }
 
-func (q *Queue) popAndPost() {
-	// fmt.Println("Checking queue for new messages...")
+func (q *Queue) popAndPost(count int) {
 	if len(q.messages) == 0 {
 		return
 	}
-	// fmt.Println("Found one!")
 
-	m := q.messages[0]
-	q.messages = q.messages[1:]
+	if count > len(q.messages) {
+		count = len(q.messages)
+	}
 
-	msg := m.m
+	msgs := make([]*MsgHolder, count)
+
+	for i := 0; i < count; i++ {
+		m := q.messages[0]
+		q.messages = q.messages[1:]
+		msgs[i] = m
+	}
+
+	ms := make([]sdk.Msg, count)
+	for i, msg := range msgs {
+		ms[i] = msg.m
+	}
 
 	data := walletTypes.NewTransactionData(
-		msg,
+		ms...,
 	).WithGasAuto().WithFeeAuto()
 
 	res, err := q.w.BroadcastTxCommit(data)
@@ -77,10 +87,11 @@ func (q *Queue) popAndPost() {
 	if res == nil {
 		fmt.Println("response is for sure empty")
 	}
-	m.err = err
-	m.r = res
-
-	m.wg.Done()
+	for _, msg := range msgs {
+		msg.r = res
+		msg.err = err
+		msg.wg.Done()
+	}
 }
 
 func (q *Queue) Post(msg sdk.Msg) (*sdk.TxResponse, error) {
