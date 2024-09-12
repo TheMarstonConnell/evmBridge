@@ -5,12 +5,14 @@ import (
 	_ "embed"
 	"encoding/hex"
 	"fmt"
+	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/JackalLabs/mulberry/jackal/uploader"
+	evmTypes "github.com/JackalLabs/mulberry/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/desmos-labs/cosmos-go-wallet/wallet"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	storageTypes "github.com/jackalLabs/canine-chain/v4/x/storage/types"
 	"log"
 	"strings"
 )
@@ -95,6 +97,8 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue) {
 
 	log.Printf("Event details: %+v", event)
 
+	evmAddress := event.Sender.String()
+
 	merkleRoot, err := hex.DecodeString(event.Merkle)
 	if err != nil {
 		log.Fatalf("Failed to decode merkle: %v", err)
@@ -109,17 +113,38 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue) {
 
 	log.Printf("Relaying for %s\n", event.Sender.String())
 
-	msg := &storageTypes.MsgPostFile{
-		Creator:       w.AccAddress(),
-		Merkle:        merkleRoot,
-		FileSize:      int64(event.Size),
-		ProofInterval: 40,
-		ProofType:     0,
-		MaxProofs:     3,
-		Note:          fmt.Sprintf("{\"memo\":\"Relayed from EVM for %s\"}", event.Sender.String()),
+	var hours int64 = 100 * 365 * 24
+
+	storageMsg := evmTypes.ExecuteMsg{
+		PostFile: &evmTypes.ExecuteMsgPostFile{
+			Merkle:        merkleRoot,
+			FileSize:      int64(event.Size),
+			ProofInterval: 3600,
+			ProofType:     0,
+			MaxProofs:     3,
+			Note:          fmt.Sprintf("{\"memo\":\"Relayed from EVM for %s\"}", evmAddress),
+			Expires:       abci.Response.LastBlockHeight + ((hours * 60 * 60) / 6),
+		},
 	}
 
-	msg.Expires = abci.Response.LastBlockHeight + ((100 * 365 * 24 * 60 * 60) / 6)
+	factoryMsg := evmTypes.ExecuteFactoryMsg{
+		CallBindings: &evmTypes.ExecuteMsgCallBindings{
+			EvmAddress: &evmAddress,
+			Msg:        &storageMsg,
+		},
+	}
+
+	cost := q.GetCost(int64(event.Size/1024), hours)
+	cost = int64(float64(cost) * 1.1)
+	c := sdk.NewInt64Coin("ujkl", cost)
+
+	msg := &wasm.MsgExecuteContract{
+		Sender:   w.AccAddress(),
+		Contract: "CONTRACT_ADDRESS",
+		Msg:      factoryMsg.Encode(),
+		Funds:    sdk.NewCoins(c),
+	}
+
 	if err := msg.ValidateBasic(); err != nil {
 		log.Fatalf("Failed to validate message: %v", err)
 		return
