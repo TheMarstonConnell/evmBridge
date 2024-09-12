@@ -3,14 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
+	"os"
+	"time"
+
 	"github.com/JackalLabs/mulberry/jackal/uploader"
 	jWallet "github.com/JackalLabs/mulberry/jackal/wallet"
 	walletTypes "github.com/desmos-labs/cosmos-go-wallet/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/joho/godotenv"
-	"log"
-	"os"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -30,6 +31,10 @@ func main() {
 		GasPrice:      "0.02ujkl",
 		GasAdjustment: 1.5,
 	})
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
 
 	log.Printf("Address: %s\n", w.AccAddress())
 

@@ -49,7 +49,7 @@ func (q *Queue) Listen() {
 	go func() {
 		for !q.stopped {
 			time.Sleep(time.Minute * 10)
-			q.UpdateGecko() // updating price oracle every 5 minutes
+			_ = q.UpdateGecko() // updating price oracle every 5 minutes, we don't care about errors tbh
 		}
 	}()
 }
@@ -129,7 +129,6 @@ func (q *Queue) UpdateGecko() error {
 }
 
 func (q *Queue) GetCost(kbs int64, hours int64) int64 {
-
 	pricePerTBPerMonth := 15.0 * float64(kbs) * float64(hours)
 
 	quantifiedPricePerTBPerMonth := pricePerTBPerMonth / 3.0

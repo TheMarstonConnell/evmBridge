@@ -3,8 +3,12 @@ package main
 import (
 	"context"
 	_ "embed"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"log"
+	"strings"
+
 	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/JackalLabs/mulberry/jackal/uploader"
 	evmTypes "github.com/JackalLabs/mulberry/types"
@@ -13,8 +17,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"log"
-	"strings"
 )
 
 var ABI = `[
@@ -74,7 +76,6 @@ func init() {
 }
 
 func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue) {
-
 	event := struct {
 		Sender common.Address
 		Merkle string
@@ -115,9 +116,11 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue) {
 
 	var hours int64 = 100 * 365 * 24
 
+	merkleBase64 := base64.StdEncoding.EncodeToString(merkleRoot)
+
 	storageMsg := evmTypes.ExecuteMsg{
 		PostFile: &evmTypes.ExecuteMsgPostFile{
-			Merkle:        merkleRoot,
+			Merkle:        merkleBase64,
 			FileSize:      int64(event.Size),
 			ProofInterval: 3600,
 			ProofType:     0,
@@ -163,5 +166,4 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue) {
 
 	log.Println(res.RawLog)
 	log.Println(res.TxHash)
-
 }
