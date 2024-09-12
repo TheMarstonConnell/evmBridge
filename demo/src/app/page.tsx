@@ -1,13 +1,18 @@
 'use client'
 
-import {useAccount, useConnect, useDisconnect, useWriteContract, BaseError} from 'wagmi'
-import {useState} from "react";
+import {useAccount, useConnect, useDisconnect, useWriteContract, BaseError, useEnsAddress, useReadContract} from 'wagmi'
+import {useEffect, useState} from "react";
 import {IMerkletreeSource, Merkletree} from "@jackallabs/dogwood-tree";
+import { useEnsName } from 'wagmi'
+import {mainnet, sepolia} from 'wagmi/chains'
+import { useEnsAvatar } from 'wagmi'
+import { normalize } from 'viem/ens'
+import { readContract } from '@wagmi/core'
 
 import './page.css'
+import {getConfig} from "@/wagmi";
 
 function App() {
-    const account = useAccount()
     const {connectors, connect, status, connectError} = useConnect()
     const {disconnect} = useDisconnect()
     const {
@@ -16,6 +21,20 @@ function App() {
         isPending,
         writeContract
     } = useWriteContract()
+    const account = useAccount();
+
+
+    const {data: ensName } = useEnsName({
+        address: account.address,
+        enabled: !!account.address,  // Ensure the query runs only if the address is defined
+        chainId: mainnet.id,
+    });
+
+    const {data: avatar} = useEnsAvatar({
+        name: normalize(ensName),
+        enabled: !!account.address,  // Ensure the query runs only if the address is defined
+        chainId: mainnet.id,
+    })
 
     const [file, setFile] = useState(null);
     const [cid, setCid] = useState("");
@@ -30,8 +49,86 @@ function App() {
 
     const abi = [
         {
+            "type": "constructor",
+            "inputs": [
+                {
+                    "name": "_jackalAddress",
+                    "type": "address",
+                    "internalType": "address"
+                }
+            ],
+            "stateMutability": "nonpayable"
+        },
+        {
             "type": "function",
-            "name": "postFile",
+            "name": "cabinet",
+            "inputs": [
+                {
+                    "name": "",
+                    "type": "address",
+                    "internalType": "address"
+                },
+                {
+                    "name": "",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "string",
+                    "internalType": "string"
+                }
+            ],
+            "stateMutability": "view"
+        },
+        {
+            "type": "function",
+            "name": "fileAddress",
+            "inputs": [
+                {
+                    "name": "_addr",
+                    "type": "address",
+                    "internalType": "address"
+                },
+                {
+                    "name": "_index",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "string",
+                    "internalType": "string"
+                }
+            ],
+            "stateMutability": "view"
+        },
+        {
+            "type": "function",
+            "name": "fileCount",
+            "inputs": [
+                {
+                    "name": "_addr",
+                    "type": "address",
+                    "internalType": "address"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                }
+            ],
+            "stateMutability": "view"
+        },
+        {
+            "type": "function",
+            "name": "upload",
             "inputs": [
                 {
                     "name": "merkle",
@@ -46,33 +143,9 @@ function App() {
             ],
             "outputs": [],
             "stateMutability": "payable"
-        },
-        {
-            "type": "event",
-            "name": "PostedFile",
-            "inputs": [
-                {
-                    "name": "sender",
-                    "type": "address",
-                    "indexed": false,
-                    "internalType": "address"
-                },
-                {
-                    "name": "merkle",
-                    "type": "string",
-                    "indexed": false,
-                    "internalType": "string"
-                },
-                {
-                    "name": "size",
-                    "type": "uint64",
-                    "indexed": false,
-                    "internalType": "uint64"
-                }
-            ],
-            "anonymous": false
         }
     ]
+
 
     async function doUpload (callback: Function)  {
 
@@ -169,6 +242,14 @@ function App() {
 
     }
 
+    function shorten(s:string) {
+        if (s.length < 20) {
+            return s;
+        }
+
+        return s.substring(0, 9) + "..." + s.substring(s.length - 9)
+    }
+
     const getEthPrice = async (): Promise<number> => {
         try {
             const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
@@ -206,17 +287,21 @@ function App() {
         return priceInWei;
     }
 
+
+
     function uploadFile() {
         doUpload((root) => {
             console.log(root)
             getEthPrice().then(price => {
                 const p = getStoragePrice(price, file.size);
+                const wei =  Math.floor(p * 1.05)
+                console.log("price: " + wei)
                 writeContract({
-                    address: '0x3a5ab5d5df8A8AF40BbcE53DF5999E92b9017483',
+                    address: '0xdE39AF082d4BCfaeF8676ecaccaFd4cFDc7B525D',
                     abi,
-                    functionName: 'postFile',
+                    functionName: 'upload',
                     args: [root, BigInt(file.size)],
-                    value: BigInt(Math.floor(p * 1.01)),
+                    value: BigInt(wei),
                 });
             });
 
@@ -235,10 +320,21 @@ function App() {
                     {account.status === 'connected' && (
                         <div>
                             <h2>Account</h2>
-                            <span>{account.addresses?.[0]}</span>
-                            <button className={"discon"} type="button" onClick={() => disconnect()}>
-                                Disconnect
-                            </button>
+                            <div className={"flex"}>
+                                <div id={"ens-container"}>
+                                    {avatar && <img src={avatar} alt="ENS Avatar"
+                                                    style={{width: 50, height: 50, borderRadius: '50%'}}/>}
+                                    <div id={"names"}>
+                                        <span>{ensName ? ensName : account.address}</span>
+                                        {ensName && <span id={"address"}>{shorten(account.address)}</span>}
+                                    </div>
+
+                                </div>
+                                <button className={"discon"} type="button" onClick={() => disconnect()}>
+                                    Disconnect
+                                </button>
+                            </div>
+
                         </div>
                     )}
                 </div>
@@ -279,6 +375,7 @@ function App() {
                     <div>Error: {(error as BaseError).shortMessage || error.message}</div>
                 )}
             </div>
+
         </>
     )
 }

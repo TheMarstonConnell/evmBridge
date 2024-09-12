@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"evmBridge/jackal/uploader"
-	jWallet "evmBridge/jackal/wallet"
 	"fmt"
+	"github.com/JackalLabs/mulberry/jackal/uploader"
+	jWallet "github.com/JackalLabs/mulberry/jackal/wallet"
 	walletTypes "github.com/desmos-labs/cosmos-go-wallet/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/joho/godotenv"

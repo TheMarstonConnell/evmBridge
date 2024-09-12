@@ -32,7 +32,7 @@ abstract contract Jackal {
         return p;
     }
 
-    function postFile(string memory merkle, uint64 filesize) public payable {
+    function postFile(string memory merkle, uint64 filesize) public payable{
         require(msg.sender != address(0), "Invalid sender address");
 
         uint256 pE = getStoragePrice(filesize);

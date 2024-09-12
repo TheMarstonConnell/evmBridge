@@ -69,3 +69,63 @@ body {
     padding-right: 80px;
     padding-top: 20px;
 }
+
+.flex {
+    display: flex;
+    flex-direction: row;
+}
+
+.flex > button {
+    height: min-content;
+    align-self: center;
+    display: inline-flex;
+}
+
+#ens-container {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+}
+
+#ens-container > span {
+    height: min-content;
+    align-self: center;
+    display: inline-flex;
+}
+
+#oldfiles {
+    list-style: none;
+    padding: 0px;
+    gap: 20px;
+}
+
+#oldfiles > li {
+    flex-direction: row;
+    align-items: end;
+    display: inline-flex;
+}
+
+.index {
+    font-weight: bold;
+    padding-right: 4px;
+    font-size: 1.1em;
+}
+
+.hashlink {
+    max-width: 300px;
+    word-break: break-all;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+#names {
+    display: inline-flex;
+    flex-direction: column;
+}
+
+#address {
+    font-size: 0.8rem;
+    color: #8a897c;
+}

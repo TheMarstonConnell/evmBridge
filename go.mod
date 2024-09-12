@@ -1,4 +1,4 @@
-module evmBridge
+module github.com/JackalLabs/mulberry
 
 go 1.23.0
 
@@ -6,7 +6,7 @@ require (
 	github.com/cosmos/cosmos-sdk v0.45.17
 	github.com/desmos-labs/cosmos-go-wallet v0.0.0-00010101000000-000000000000
 	github.com/ethereum/go-ethereum v1.13.15
-	github.com/jackalLabs/canine-chain/v3 v3.0.0-00010101000000-000000000000
+	github.com/jackalLabs/canine-chain/v4 v4.1.0-beta.2
 	github.com/joho/godotenv v1.5.1
 )
 
@@ -19,7 +19,7 @@ require (
 	github.com/99designs/keyring v1.2.1 // indirect
 	github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d // indirect
 	github.com/CosmWasm/wasmd v0.32.0 // indirect
-	github.com/CosmWasm/wasmvm v1.2.3 // indirect
+	github.com/CosmWasm/wasmvm v1.2.6 // indirect
 	github.com/DataDog/zstd v1.5.2 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/StackExchange/wmi v1.2.1 // indirect
@@ -207,7 +207,7 @@ replace (
 	github.com/ipfs/go-ds-badger2 => github.com/TheMarstonConnell/go-ds-badger2 v0.0.0-20240304191516-af5ee03005fc
 
 	//github.com/jackalLabs/canine-chain/v3 => ../canine-chain
-	github.com/jackalLabs/canine-chain/v3 => github.com/jackalLabs/canine-chain/v3 v3.0.3-rc.3.0.20240611211706-1d26f5317230 // using the master branch for now before v4 releases
+	//github.com/jackalLabs/canine-chain/v3 => github.com/jackalLabs/canine-chain/v3 v3.0.3-rc.3.0.20240611211706-1d26f5317230 // using the master branch for now before v4 releases
 
 	github.com/tendermint/tendermint => github.com/cometbft/cometbft v0.34.27
 
