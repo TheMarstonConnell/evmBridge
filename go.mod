@@ -3,10 +3,11 @@ module github.com/JackalLabs/mulberry
 go 1.23.0
 
 require (
+	github.com/CosmWasm/wasmd v0.32.0
 	github.com/cosmos/cosmos-sdk v0.45.17
 	github.com/desmos-labs/cosmos-go-wallet v0.0.0-00010101000000-000000000000
 	github.com/ethereum/go-ethereum v1.13.15
-	github.com/jackalLabs/canine-chain/v4 v4.1.0-beta.2
+	github.com/jackalLabs/canine-chain/v4 v4.1.3-beta.1
 	github.com/joho/godotenv v1.5.1
 )
 
@@ -18,7 +19,6 @@ require (
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.1 // indirect
 	github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d // indirect
-	github.com/CosmWasm/wasmd v0.32.0 // indirect
 	github.com/CosmWasm/wasmvm v1.2.6 // indirect
 	github.com/DataDog/zstd v1.5.2 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
