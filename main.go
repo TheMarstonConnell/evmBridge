@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/JackalLabs/mulberry/jackal/uploader"
@@ -36,17 +38,13 @@ func main() {
 		return
 	}
 
+	jackalContract := os.Getenv("JACKAL_CONTRACT")
+
 	log.Printf("Address: %s\n", w.AccAddress())
 
 	q := uploader.NewQueue(w)
 
 	q.Listen()
-
-	client, err := ethclient.Dial(os.Getenv("ETH_RPC"))
-	if err != nil {
-		log.Fatalf("Failed to connect to the Ethereum client: %v", err)
-	}
-	defer client.Close()
 
 	// Specify the contract address
 	contractAddress := common.HexToAddress(os.Getenv("CONTRACT_ADDRESS"))
@@ -55,41 +53,80 @@ func main() {
 	}
 
 	// Subscribe to the logs
-	logs := make(chan types.Log)
-	sub, err := client.SubscribeFilterLogs(context.Background(), query, logs)
-	if err != nil {
-		log.Fatalf("Failed to subscribe to the logs: %v", err)
-	}
+	var sub ethereum.Subscription
+	var logs chan types.Log
 
-	log.Println("Ready to listen!")
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
 	for {
-		select {
-		case err := <-sub.Err():
-			log.Fatalf("Subscription error: %v", err)
-		case vLog := <-logs:
-			log.Printf("Log received: \n")
-			log.Printf("Address: %s\n", vLog.Address.Hex())
 
-			// Ensure transaction is confirmed
-			receipt, err := waitForReceipt(client, vLog.TxHash)
-			if err != nil {
-				fmt.Printf("Failed to get transaction receipt: %v\n", err)
-				continue
-			}
+		client, err := ethclient.Dial(os.Getenv("ETH_RPC"))
+		if err != nil {
+			log.Printf("Failed to connect to the Ethereum client, retrying in 5 seconds: %v", err)
+			time.Sleep(5 * time.Second)
+			continue
+		}
 
-			if receipt != nil {
-				// Process logs if receipt is available
-				for _, log := range receipt.Logs {
-					if log.Address.Hex() == contractAddress.Hex() {
-						handleLog(log, w, q)
+		sub, logs, err = subscribeLogs(client, query)
+		if err != nil {
+			log.Printf("Failed to subscribe, retrying in 5 seconds: %v", err)
+			client.Close()
+			time.Sleep(5 * time.Second)
+			continue
+		}
+
+		log.Println("Ready to listen!")
+
+		// Listening loop
+		func() {
+			defer func() {
+				// Unsubscribe and close client on exit
+				if sub != nil {
+					sub.Unsubscribe()
+				}
+				client.Close()
+			}()
+
+			for {
+				select {
+				case <-sigs:
+					log.Println("Exiting...")
+					return
+				case err := <-sub.Err():
+					log.Printf("Subscription error, reconnecting: %v", err)
+					return // Break out of the loop to retry
+				case vLog := <-logs:
+					log.Printf("Log received: %s", vLog.Address.Hex())
+
+					// Ensure transaction is confirmed
+					receipt, err := waitForReceipt(client, vLog.TxHash)
+					if err != nil {
+						fmt.Printf("Failed to get transaction receipt: %v\n", err)
+						continue
+					}
+
+					if receipt != nil {
+						// Process logs if receipt is available
+						for _, l := range receipt.Logs {
+							if l.Address.Hex() == contractAddress.Hex() {
+								handleLog(l, w, q, jackalContract)
+							}
+						}
+					} else {
+						fmt.Println("No receipt found for the transaction.")
 					}
 				}
-			} else {
-				fmt.Println("No receipt found for the transaction.")
 			}
+		}()
 
-		}
 	}
+}
+
+func subscribeLogs(client *ethclient.Client, query ethereum.FilterQuery) (ethereum.Subscription, chan types.Log, error) {
+	logs := make(chan types.Log)
+	sub, err := client.SubscribeFilterLogs(context.Background(), query, logs)
+	return sub, logs, err
 }
 
 // waitForReceipt polls for the transaction receipt until it's available

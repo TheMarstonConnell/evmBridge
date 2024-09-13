@@ -75,7 +75,7 @@ func init() {
 	}
 }
 
-func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue) {
+func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, jackalContract string) {
 	event := struct {
 		Sender common.Address
 		Merkle string
@@ -143,10 +143,12 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue) {
 
 	msg := &wasm.MsgExecuteContract{
 		Sender:   w.AccAddress(),
-		Contract: "CONTRACT_ADDRESS",
+		Contract: jackalContract,
 		Msg:      factoryMsg.Encode(),
 		Funds:    sdk.NewCoins(c),
 	}
+
+	log.Printf("execute msg: %v", msg)
 
 	if err := msg.ValidateBasic(); err != nil {
 		log.Fatalf("Failed to validate message: %v", err)
