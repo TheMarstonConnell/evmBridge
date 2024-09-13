@@ -69,6 +69,14 @@ func main() {
 			continue
 		}
 
+		bigChainID, err := client.ChainID(context.Background())
+		if err != nil {
+			log.Printf("Failed to get the chainID, retrying in 5 seconds: %v", err)
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		chainID := bigChainID.Int64()
+
 		sub, logs, err = subscribeLogs(client, query)
 		if err != nil {
 			log.Printf("Failed to subscribe, retrying in 5 seconds: %v", err)
@@ -112,7 +120,7 @@ func main() {
 						// Process logs if receipt is available
 						for _, l := range receipt.Logs {
 							if l.Address.Hex() == contractAddress.Hex() {
-								handleLog(l, w, q, jackalContract)
+								handleLog(l, w, q, chainID, jackalContract)
 							}
 						}
 					} else {

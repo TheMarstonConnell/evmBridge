@@ -19,6 +19,14 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
+var ChainIDS = map[int64]string{
+	1:     "Ethereum",
+	8453:  "Base",
+	137:   "Polygon",
+	10:    "OP",
+	42161: "Arbitrum",
+}
+
 var ABI = `[
     {
       "type": "function",
@@ -75,7 +83,7 @@ func init() {
 	}
 }
 
-func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, jackalContract string) {
+func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID int64, jackalContract string) {
 	event := struct {
 		Sender common.Address
 		Merkle string
@@ -127,7 +135,7 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, jackalContr
 			ProofInterval: 3600,
 			ProofType:     0,
 			MaxProofs:     maxProofs,
-			Note:          fmt.Sprintf("{\"memo\":\"Relayed from EVM for %s\"}", evmAddress),
+			Note:          fmt.Sprintf("{\"memo\":\"Relayed from %s for %s\"}", chainRep(chainID), evmAddress),
 			Expires:       abci.Response.LastBlockHeight + ((hours * 60 * 60) / 6),
 		},
 	}
@@ -170,4 +178,13 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, jackalContr
 
 	log.Println(res.RawLog)
 	log.Println(res.TxHash)
+}
+
+func chainRep(id int64) string {
+	s := ChainIDS[id]
+	if len(s) == 0 {
+		return fmt.Sprintf("%d", id)
+	}
+
+	return s
 }
