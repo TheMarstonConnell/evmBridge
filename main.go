@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -69,13 +70,13 @@ func main() {
 			continue
 		}
 
-		bigChainID, err := client.ChainID(context.Background())
+		chainIDs := os.Getenv("CHAIN_ID")
+		chainID, err := strconv.ParseInt(chainIDs, 10, 64)
 		if err != nil {
-			log.Printf("Failed to get the chainID, retrying in 5 seconds: %v", err)
+			log.Print("Failed to parse chainID, retrying in 5 seconds")
 			time.Sleep(5 * time.Second)
 			continue
 		}
-		chainID := bigChainID.Int64()
 
 		sub, logs, err = subscribeLogs(client, query)
 		if err != nil {
