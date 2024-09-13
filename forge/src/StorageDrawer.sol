@@ -14,7 +14,7 @@ contract StorageDrawer {
     }
 
     function upload(string memory merkle, uint64 filesize) public payable {
-        jackalBridge.postFile{value: msg.value}(merkle, filesize);
+        jackalBridge.postFileFrom{value: msg.value}(msg.sender, merkle, filesize);
         cabinet[msg.sender].push(merkle);
     }
 

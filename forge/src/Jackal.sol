@@ -8,6 +8,23 @@ abstract contract Jackal {
 
     function getPrice() public view virtual returns(int);
 
+    mapping(address => mapping(address => bool)) public allowances;
+
+    function getAllowance(address from, address to) public view returns(bool) {
+        if (from == to) {
+            return true;
+        }
+        return allowances[to][from];
+    }
+
+    function addAllowance(address allow) public {
+        allowances[msg.sender][allow] = true;
+    }
+
+    function removeAllowance(address allow) public {
+        allowances[msg.sender][allow] = false;
+    }
+
     function getStoragePrice(uint64 filesize) public view returns (uint256) {
         uint256 price = uint256(getPrice());
 
@@ -32,13 +49,18 @@ abstract contract Jackal {
         return p;
     }
 
-    function postFile(string memory merkle, uint64 filesize) public payable{
+    function postFileFrom(address from, string memory merkle, uint64 filesize) public payable{
         require(msg.sender != address(0), "Invalid sender address");
+        require(getAllowance(msg.sender, from), "No allowance for this contract set");
 
         uint256 pE = getStoragePrice(filesize);
 
         require(msg.value >= pE, string.concat("Incorrect payment amount, need ", Strings.toString(pE), " wei"));
 
-        emit PostedFile(msg.sender, merkle, filesize);
+        emit PostedFile(from, merkle, filesize);
+    }
+
+    function postFile(string memory merkle, uint64 filesize) public payable{
+        postFileFrom(msg.sender, merkle, filesize);
     }
 }

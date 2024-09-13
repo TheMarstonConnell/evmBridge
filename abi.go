@@ -140,7 +140,7 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, jackalContr
 	}
 
 	cost := q.GetCost(fileSize*maxProofs, hours)
-	cost = int64(float64(cost) * 1.1)
+	cost = int64(float64(cost) * 1.2)
 	c := sdk.NewInt64Coin("ujkl", cost)
 
 	msg := &wasm.MsgExecuteContract{
