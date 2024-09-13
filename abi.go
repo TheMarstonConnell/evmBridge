@@ -118,13 +118,15 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, jackalContr
 
 	merkleBase64 := base64.StdEncoding.EncodeToString(merkleRoot)
 
+	var maxProofs int64 = 3
+	fileSize := int64(event.Size)
 	storageMsg := evmTypes.ExecuteMsg{
 		PostFile: &evmTypes.ExecuteMsgPostFile{
 			Merkle:        merkleBase64,
-			FileSize:      int64(event.Size),
+			FileSize:      fileSize,
 			ProofInterval: 3600,
 			ProofType:     0,
-			MaxProofs:     3,
+			MaxProofs:     maxProofs,
 			Note:          fmt.Sprintf("{\"memo\":\"Relayed from EVM for %s\"}", evmAddress),
 			Expires:       abci.Response.LastBlockHeight + ((hours * 60 * 60) / 6),
 		},
@@ -137,7 +139,7 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, jackalContr
 		},
 	}
 
-	cost := q.GetCost(int64(event.Size/1024), hours)
+	cost := q.GetCost(fileSize*maxProofs, hours)
 	cost = int64(float64(cost) * 1.1)
 	c := sdk.NewInt64Coin("ujkl", cost)
 

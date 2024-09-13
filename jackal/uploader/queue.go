@@ -3,6 +3,7 @@ package uploader
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -48,8 +49,9 @@ func (q *Queue) Listen() {
 
 	go func() {
 		for !q.stopped {
-			time.Sleep(time.Minute * 10)
 			_ = q.UpdateGecko() // updating price oracle every 5 minutes, we don't care about errors tbh
+			time.Sleep(time.Minute * 10)
+
 		}
 	}()
 }
@@ -122,6 +124,7 @@ type Price struct {
 }
 
 func (q *Queue) UpdateGecko() error {
+	log.Print("updating gecko...")
 	const u = "https://api.coingecko.com/api/v3/simple/price?ids=jackal-protocol&vs_currencies=usd"
 	resp, err := http.Get(u)
 	if err != nil {
@@ -135,23 +138,41 @@ func (q *Queue) UpdateGecko() error {
 	}
 
 	q.jklPrice = priceResp.JackalPrice.USDPrice
+	log.Printf("updated gecko with %f", q.jklPrice)
 
 	return nil
 }
 
-func (q *Queue) GetCost(kbs int64, hours int64) int64 {
-	pricePerTBPerMonth := 15.0 * float64(kbs) * float64(hours)
+func (q *Queue) GetCost(totalSize int64, hours int64) int64 {
+	kbs := totalSize / 1000
+	var kbMin int64 = 1024
+	if kbs < kbMin { // minimum amount of kbs to post
+		kbs = kbMin
+	}
 
-	quantifiedPricePerTBPerMonth := pricePerTBPerMonth / 3.0
-	pricePerGbPerMonth := quantifiedPricePerTBPerMonth / 1000.0
-	pricePerMbPerMonth := pricePerGbPerMonth / 1000.0
-	pricePerKbPerMonth := pricePerMbPerMonth / 1000.0
-	pricePerHour := pricePerKbPerMonth / 720.0
+	pricePerTBPerMonth := sdk.NewDec(15)
+	quantifiedPricePerTBPerMonth := pricePerTBPerMonth.QuoInt64(3)
+	pricePerGbPerMonth := quantifiedPricePerTBPerMonth.QuoInt64(1000)
+	pricePerMbPerMonth := pricePerGbPerMonth.QuoInt64(1000)
+	pricePerKbPerMonth := pricePerMbPerMonth.QuoInt64(1000)
+	pricePerKbPerHour := pricePerKbPerMonth.QuoInt64(720)
 
-	ujklUnit := 1000000.0
-	jklCost := pricePerHour / q.jklPrice
+	pricePerHour := pricePerKbPerHour.MulInt64(kbs)
 
-	ujklCost := jklCost * ujklUnit
+	totalCost := pricePerHour.MulInt64(hours)
 
-	return int64(ujklCost)
+	log.Printf("JKL Price := %f", q.jklPrice)
+
+	jklPrice, _ := sdk.NewDecFromStr(fmt.Sprintf("%f", q.jklPrice))
+
+	// TODO: fetch denom unit from bank module
+	var ujklUnit int64 = 1000000
+	jklCost := totalCost.Quo(jklPrice)
+
+	ujklCost := jklCost.MulInt64(ujklUnit)
+
+	log.Printf("uJKL Price := %d", ujklCost.TruncateInt64())
+
+	return ujklCost.TruncateInt64()
+
 }

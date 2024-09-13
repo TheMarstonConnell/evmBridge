@@ -59,7 +59,8 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	for {
+	stopped := false
+	for !stopped {
 
 		client, err := ethclient.Dial(os.Getenv("ETH_RPC"))
 		if err != nil {
@@ -92,6 +93,7 @@ func main() {
 				select {
 				case <-sigs:
 					log.Println("Exiting...")
+					stopped = true
 					return
 				case err := <-sub.Err():
 					log.Printf("Subscription error, reconnecting: %v", err)
