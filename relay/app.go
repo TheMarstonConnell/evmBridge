@@ -272,7 +272,7 @@ func waitForReceipt(client *ethclient.Client, txHash common.Hash, finality int64
 			callBack(receipt)
 			return nil
 		} else {
-			log.Printf("Still waiting %d more blocks...", finality-blockDiff)
+			log.Printf("Still waiting %d more blocks for %s...", finality-blockDiff, txHash.String())
 		}
 	}
 }
