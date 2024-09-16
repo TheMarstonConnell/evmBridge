@@ -254,12 +254,14 @@ func waitForReceipt(client *ethclient.Client, txHash common.Hash, chainId, final
 
 		receipt, err := client.TransactionReceipt(context.Background(), txHash)
 		if err != nil {
+			log.Printf("cannot get receipt from network | %s", err.Error())
 			errCount++
 			continue
 		}
 
 		latestBlock, err := client.BlockByNumber(context.Background(), nil)
 		if err != nil {
+			log.Printf("cannot get current height | %s", err.Error())
 			errCount++
 			continue
 		}
