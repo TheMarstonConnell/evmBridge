@@ -21,8 +21,8 @@ type NetworkConfig struct {
 	Name     string `yaml:"name" mapstructure:"name"`
 	RPC      string `yaml:"rpc" mapstructure:"rpc"`
 	Contract string `yaml:"contract" mapstructure:"contract"`
-	ChainID  int64  `yaml:"chain_id" mapstructure:"chain_id"`
-	Finality int64  `yaml:"finality" mapstructure:"finality"`
+	ChainID  uint64 `yaml:"chain_id" mapstructure:"chain_id"`
+	Finality uint64 `yaml:"finality" mapstructure:"finality"`
 }
 
 func DefaultConfig() Config {

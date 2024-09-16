@@ -75,7 +75,7 @@ func init() {
 	}
 }
 
-func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID int64, jackalContract string) {
+func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID uint64, jackalContract string) {
 	event := struct {
 		Sender common.Address
 		Merkle string
@@ -172,7 +172,7 @@ func handleLog(vLog *types.Log, w *wallet.Wallet, q *uploader.Queue, chainID int
 	log.Println(res.TxHash)
 }
 
-func chainRep(id int64) string {
+func chainRep(id uint64) string {
 	s := ChainIDS[id]
 	if len(s) == 0 {
 		return fmt.Sprintf("%d", id)

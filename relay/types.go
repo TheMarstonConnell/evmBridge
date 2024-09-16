@@ -12,7 +12,7 @@ type App struct {
 	cfg config.Config
 }
 
-var ChainIDS = map[int64]string{
+var ChainIDS = map[uint64]string{
 	1:     "Ethereum",
 	8453:  "Base",
 	137:   "Polygon",

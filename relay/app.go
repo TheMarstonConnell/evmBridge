@@ -243,7 +243,7 @@ func subscribeLogs(client *ethclient.Client, query ethereum.FilterQuery) (ethere
 }
 
 // waitForReceipt polls for the transaction receipt until it's available
-func waitForReceipt(client *ethclient.Client, txHash common.Hash, chainId, finality int64, callBack func(receipt *types.Receipt)) error {
+func waitForReceipt(client *ethclient.Client, txHash common.Hash, chainId, finality uint64, callBack func(receipt *types.Receipt)) error {
 	var errCount int64
 	for {
 		if errCount > 30 {
@@ -259,17 +259,16 @@ func waitForReceipt(client *ethclient.Client, txHash common.Hash, chainId, final
 			continue
 		}
 
-		latestBlock, err := client.BlockByNumber(context.Background(), nil)
+		latestBlock, err := client.BlockNumber(context.Background())
 		if err != nil {
 			log.Printf("cannot get current height | %s", err.Error())
 			errCount++
 			continue
 		}
 
-		latest := latestBlock.Number().Int64()
-		txBlock := receipt.BlockNumber.Int64()
+		txBlock := receipt.BlockNumber.Uint64()
 
-		blockDiff := latest - txBlock
+		blockDiff := latestBlock - txBlock
 		if blockDiff >= finality {
 			callBack(receipt)
 			return nil
