@@ -268,7 +268,7 @@ func waitForReceipt(client *ethclient.Client, txHash common.Hash, finality int64
 		txBlock := receipt.BlockNumber.Int64()
 
 		blockDiff := latest - txBlock
-		if blockDiff > finality {
+		if blockDiff >= finality {
 			callBack(receipt)
 			return nil
 		} else {
