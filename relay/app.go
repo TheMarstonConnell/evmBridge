@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -210,6 +211,8 @@ func MakeApp(homePath string) (*App, error) {
 	}
 
 	seed := string(seedData)
+
+	seed = strings.TrimSpace(seed)
 
 	w, err := jWallet.CreateWallet(seed, "m/44'/118'/0'/0/0", walletTypes.ChainConfig{
 		Bech32Prefix:  "jkl",
