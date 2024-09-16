@@ -22,6 +22,7 @@ type NetworkConfig struct {
 	RPC      string `yaml:"rpc" mapstructure:"rpc"`
 	Contract string `yaml:"contract" mapstructure:"contract"`
 	ChainID  int64  `yaml:"chain_id" mapstructure:"chain_id"`
+	Finality int64  `yaml:"finality" mapstructure:"finality"`
 }
 
 func DefaultConfig() Config {
@@ -38,12 +39,14 @@ func DefaultConfig() Config {
 				RPC:      "wss://ethereum-sepolia-rpc.publicnode.com",
 				Contract: "0x730fdF2ee985Ac0F7792f90cb9e1E5485d340208",
 				ChainID:  11155111,
+				Finality: 2,
 			},
 			{
 				Name:     "Base Sepolia",
 				RPC:      "wss://base-sepolia-rpc.publicnode.com",
 				Contract: "0x20738B8eaB736f24c7881bA48263ee60Eb2a0A2a",
 				ChainID:  84532,
+				Finality: 2,
 			},
 		},
 	}

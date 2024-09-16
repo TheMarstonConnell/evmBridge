@@ -19,5 +19,3 @@ var ChainIDS = map[int64]string{
 	10:    "OP",
 	42161: "Arbitrum",
 }
-
-const ConfirmationsNeeded = 12
