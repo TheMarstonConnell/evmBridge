@@ -96,7 +96,7 @@ func (a *App) ListenToNetwork(network config.NetworkConfig, wg *sync.WaitGroup) 
 
 					go func() { // run async
 						// Ensure transaction is confirmed
-						err := waitForReceipt(client, vLog.TxHash, network.Finality, func(receipt *types.Receipt) {
+						err := waitForReceipt(client, vLog.TxHash, network.ChainID, network.Finality, func(receipt *types.Receipt) {
 							for _, l := range receipt.Logs {
 								if l.Address.Hex() == contractAddress.Hex() {
 									handleLog(l, a.w, a.q, network.ChainID, jackalContract)
@@ -243,14 +243,14 @@ func subscribeLogs(client *ethclient.Client, query ethereum.FilterQuery) (ethere
 }
 
 // waitForReceipt polls for the transaction receipt until it's available
-func waitForReceipt(client *ethclient.Client, txHash common.Hash, finality int64, callBack func(receipt *types.Receipt)) error {
+func waitForReceipt(client *ethclient.Client, txHash common.Hash, chainId, finality int64, callBack func(receipt *types.Receipt)) error {
 	var errCount int64
 	for {
-		if errCount > 10 {
+		if errCount > 30 {
 			return errors.New("cannot get receipt")
 		}
 
-		time.Sleep(1 * time.Second)
+		time.Sleep(3 * time.Second)
 
 		receipt, err := client.TransactionReceipt(context.Background(), txHash)
 		if err != nil {
@@ -272,7 +272,7 @@ func waitForReceipt(client *ethclient.Client, txHash common.Hash, finality int64
 			callBack(receipt)
 			return nil
 		} else {
-			log.Printf("Still waiting %d more blocks for %s...", finality-blockDiff, txHash.String())
+			log.Printf("Still waiting %d more blocks for %s on %d...", finality-blockDiff, txHash.String(), chainId)
 		}
 	}
 }
