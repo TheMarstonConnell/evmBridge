@@ -1,4 +1,4 @@
-package main
+package relay
 
 import (
 	"context"
@@ -18,14 +18,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
-
-var ChainIDS = map[int64]string{
-	1:     "Ethereum",
-	8453:  "Base",
-	137:   "Polygon",
-	10:    "OP",
-	42161: "Arbitrum",
-}
 
 var ABI = `[
     {

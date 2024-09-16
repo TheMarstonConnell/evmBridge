@@ -3,10 +3,11 @@ package uploader
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/rs/zerolog/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	walletTypes "github.com/desmos-labs/cosmos-go-wallet/types"
@@ -174,5 +175,4 @@ func (q *Queue) GetCost(totalSize int64, hours int64) int64 {
 	log.Printf("uJKL Price := %d", ujklCost.TruncateInt64())
 
 	return ujklCost.TruncateInt64()
-
 }
