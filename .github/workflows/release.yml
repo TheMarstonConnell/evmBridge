@@ -26,7 +26,7 @@ jobs:
         run: |
           make build
           cp "build/mulberry" "mulberry-$RUNNER_OS"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: mulberry-${{runner.os}}
           path: mulberry-${{runner.os}}
